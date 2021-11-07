@@ -3,12 +3,14 @@ import os
 
 from clients.fapi.s3 import S3Client
 from clients.tg.api import TgClient
+from clients.ws.bitmex import fetch_10
 
 
 async def cli():
-    async with TgClient(os.getenv("BOT_TOKEN")) as tg_cli:
-        res = await tg_cli.get_me()
-        print(res)
+    # async with TgClient(os.getenv("BOT_TOKEN")) as tg_cli:
+    #     res = await tg_cli.get_me()
+    #     print(res)
+    await fetch_10()
 
 
 async def s3():

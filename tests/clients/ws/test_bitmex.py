@@ -36,6 +36,9 @@ class MockedWsResponse:
     async def send_bytes(self, *_, **__):
         return True
 
+    async def close(self):
+        pass
+
 
 async def mocked_ws_connect():
     return MockedWsResponse()
