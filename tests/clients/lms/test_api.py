@@ -1,12 +1,12 @@
 from aioresponses import aioresponses, CallbackResult
 import pytest
 
-from clients.lms.api import LmsClientError
+from clients.lms.api import LmsClientError, LmsClient
 from tests.clients.lms import data
 
 
 class TestGetUserCurrent:
-    async def test_success(self, lms_url, lms_client):
+    async def test_success(self, lms_url, lms_client: LmsClient):
         with aioresponses() as m:
             m.get(lms_url('v2.user.current'), payload=data.USER_CURRENT)
             resp = await lms_client.get_user_current()
@@ -16,7 +16,7 @@ class TestGetUserCurrent:
         {'body': 'invalid json'},
         {'status': 401},
     ])
-    async def test_errors(self, lms_url, lms_client, kw):
+    async def test_errors(self, lms_url, lms_client: LmsClient, kw):
         with aioresponses() as m:
             m.get(lms_url('v2.user.current'), **kw)
             with pytest.raises(LmsClientError):
@@ -24,7 +24,7 @@ class TestGetUserCurrent:
 
 
 class TestLogin:
-    async def test_success(self, lms_url, lms_client):
+    async def test_success(self, lms_url, lms_client: LmsClient):
         def callback(*_, json, **__):
             assert 'email' in json
             assert 'password' in json
@@ -48,7 +48,7 @@ class TestLogin:
         {'status': 401},
         {'payload': {}},
     ])
-    async def test_errors(self, lms_url, lms_client, kw):
+    async def test_errors(self, lms_url, lms_client: LmsClient, kw):
         with aioresponses() as m:
             m.post(lms_url('v2.user.login'), **kw)
             with pytest.raises(LmsClientError):

@@ -1,3 +1,4 @@
+from json import JSONDecodeError
 from typing import Tuple
 
 from aiohttp import ClientResponse
@@ -10,16 +11,24 @@ class LmsClientError(ClientError):
 
 
 class LmsClient(Client):
-    BASE_PATH = ''
+    BASE_PATH = 'https://lms.metaclass.kts.studio/api'
 
     def __init__(self, token: str):
-        raise NotImplementedError
+        super().__init__()
+        self.token = token
 
     async def _handle_response(self, resp: ClientResponse) -> Tuple[dict, ClientResponse]:
-        raise NotImplementedError
+        if resp.status >= 400:
+            raise LmsClientError(resp, await resp.text())
+        try:
+            data = await resp.json()
+        except JSONDecodeError:
+            raise LmsClientError(resp, await resp.text())
+        return data, resp
 
     async def get_user_current(self) -> dict:
-        raise NotImplementedError
+        data, resp = await self._perform_request('get', self.get_path('v2.user.current'))
+        return data
 
     async def login(self, email: str, password: str) -> str:
         raise NotImplementedError
