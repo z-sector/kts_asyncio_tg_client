@@ -13,14 +13,14 @@ class TgClientError(ClientError):
 
 
 class TgClient(Client):
-    BASE_PATH = 'https://api.telegram.org/bot'
+    BASE_PATH = 'https://api.telegram.org'
 
     def __init__(self, token: str = ''):
         super().__init__()
         self.token = token
 
     def get_path(self, url: str) -> str:
-        return f"{self.get_base_path().strip('/')}{self.token}/{url.lstrip('/')}"
+        return f"{self.get_base_path().strip('/')}/bot{self.token}/{url.lstrip('/')}"
 
     async def _handle_response(self, resp: ClientResponse) -> dict:
         if resp.status >= 400:
