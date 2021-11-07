@@ -1,3 +1,4 @@
+from http.cookies import SimpleCookie
 from json import JSONDecodeError
 from typing import Tuple
 
@@ -31,4 +32,11 @@ class LmsClient(Client):
         return data
 
     async def login(self, email: str, password: str) -> str:
-        raise NotImplementedError
+        data, resp = await self._perform_request('post', self.get_path('v2.user.login'), json={'email': email, 'password': password})
+        cookies: SimpleCookie[str] = resp.cookies
+
+        cookie_session = cookies.get('sessionid')
+        if cookie_session is None:
+            raise LmsClientError(resp, await resp.text())
+
+        return cookie_session.value
