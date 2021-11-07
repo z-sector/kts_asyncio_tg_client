@@ -1,13 +1,13 @@
 from aioresponses import aioresponses, CallbackResult
 import pytest
 
-from clients.tg.api import TgClientError
+from clients.tg.api import TgClientError, TgClient
 from clients.tg.dcs import UpdateObj
 from tests.clients.tg import data
 
 
 class TestGetMe:
-    async def test_success(self, tg_base_url, tg_client):
+    async def test_success(self, tg_base_url, tg_client: TgClient):
         with aioresponses() as m:
             m.get(tg_base_url('getMe'), payload=data.GET_ME)
             resp = await tg_client.get_me()
@@ -17,7 +17,7 @@ class TestGetMe:
         {'status': 403},
         {'body': 'invalid json'},
     ])
-    async def test_errors(self, tg_base_url, tg_client, kw):
+    async def test_errors(self, tg_base_url, tg_client: TgClient, kw):
         with aioresponses() as m:
             m.get(tg_base_url('getMe'), **kw)
             with pytest.raises(TgClientError):

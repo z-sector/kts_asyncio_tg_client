@@ -23,7 +23,7 @@ def tg_base_url(tg_token, tg_api_url):
 
 
 @pytest.fixture
-async def tg_client(tg_token):
+async def tg_client(tg_token) -> TgClient:
     return TgClient(tg_token)
 
 
