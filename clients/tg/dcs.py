@@ -1,17 +1,42 @@
-from typing import ClassVar, Type, List
+from dataclasses import field
+from typing import ClassVar, Type, List, Dict, Any
 
 from marshmallow_dataclass import dataclass
 from marshmallow import Schema, EXCLUDE
 
 
 @dataclass
+class From:
+    id: int
+    is_bot: bool
+    first_name: str
+    last_name: str
+    username: str
+    language_code: str
+
+@dataclass
+class Chat:
+    id: int
+    first_name: str
+    last_name: str
+    username: str
+    type: str
+
+
+@dataclass
 class Message:
-    pass
+    message_id: int
+    from_: From = field(metadata={'data_key': 'from'})
+    chat: Chat
+    date: int
+    text: str
+    entities: List[Dict[str, Any]]
 
 
 @dataclass
 class UpdateObj:
-    pass
+    update_id: int
+    message: Message
 
 
 @dataclass

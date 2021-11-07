@@ -2,6 +2,7 @@ from json import JSONDecodeError
 from typing import Optional, List
 
 from aiohttp import ClientResponse
+from marshmallow import ValidationError
 
 from clients.base import ClientError, Client
 from clients.tg.dcs import UpdateObj, Message, GetUpdatesResponse
@@ -41,7 +42,12 @@ class TgClient(Client):
         return data
 
     async def get_updates_in_objects(self, *args, **kwargs) -> List[UpdateObj]:
-        raise NotImplementedError
+        data = await self.get_updates(*args, **kwargs)
+        try:
+            resp_obj: GetUpdatesResponse = GetUpdatesResponse.Schema().load(data)
+        except ValidationError:
+            raise TgClientError(data)
+        return resp_obj.result
 
     async def send_message(self, chat_id: int, text: str) -> Message:
         raise NotImplementedError

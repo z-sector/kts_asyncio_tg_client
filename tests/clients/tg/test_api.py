@@ -56,7 +56,7 @@ class TestGetUpdates:
 
 
 class TestGetUpdatesInObjects:
-    async def test_success(self, tg_base_url, tg_client):
+    async def test_success(self, tg_base_url, tg_client: TgClient):
         with aioresponses() as m:
             m.get(tg_base_url('getUpdates'), payload=data.GET_UPDATES)
             resp = await tg_client.get_updates_in_objects()
@@ -75,7 +75,7 @@ class TestGetUpdatesInObjects:
         {'body': 'invalid json'},
         {'payload': {}},
     ])
-    async def test_errors(self, tg_base_url, tg_client, kw):
+    async def test_errors(self, tg_base_url, tg_client: TgClient, kw):
         with aioresponses() as m:
             m.get(tg_base_url('getUpdates'), **kw)
             with pytest.raises(TgClientError):
