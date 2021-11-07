@@ -25,20 +25,20 @@ class TestGetMe:
 
 
 class TestGetUpdates:
-    async def test_without_offset(self, tg_base_url, tg_client):
+    async def test_without_offset(self, tg_base_url, tg_client: TgClient):
         with aioresponses() as m:
             m.get(tg_base_url('getUpdates'), payload=data.GET_UPDATES)
             resp = await tg_client.get_updates()
             assert resp == data.GET_UPDATES
 
-    async def test_with_offset(self, tg_base_url, tg_client):
+    async def test_with_offset(self, tg_base_url, tg_client: TgClient):
         offset = 100500
         with aioresponses() as m:
             m.get(tg_base_url(f'getUpdates?offset={offset}'), payload=data.GET_OFFSET_UPDATES)
             resp = await tg_client.get_updates(offset=offset)
             assert resp == data.GET_OFFSET_UPDATES
 
-    async def test_lp(self, tg_base_url, tg_client):
+    async def test_lp(self, tg_base_url, tg_client: TgClient):
         with aioresponses() as m:
             m.get(tg_base_url(f'getUpdates?timeout=30'), payload=data.GET_UPDATES)
             resp = await tg_client.get_updates(timeout=30)
@@ -48,7 +48,7 @@ class TestGetUpdates:
         {'status': 403},
         {'body': 'invalid json'},
     ])
-    async def test_errors(self, tg_base_url, tg_client, kw):
+    async def test_errors(self, tg_base_url, tg_client: TgClient, kw):
         with aioresponses() as m:
             m.get(tg_base_url('getUpdates'), **kw)
             with pytest.raises(TgClientError):
