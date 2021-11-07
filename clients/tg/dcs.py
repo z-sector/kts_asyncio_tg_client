@@ -30,7 +30,7 @@ class Message:
     from_: From = field(metadata={'data_key': 'from'})
     chat: Chat
     date: int
-    text: str
+    text: str = field(default='')
     entities: List[Dict[str, Any]] = field(default_factory=list)
 
     Schema: ClassVar[Type[Schema]] = Schema

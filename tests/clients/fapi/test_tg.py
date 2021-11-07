@@ -18,7 +18,7 @@ class TestSendDocument:
 
         with aioresponses() as m:
             m.post(tg_base_url('sendDocument'), callback=callback)
-            resp = await file_tg_client.send_document(1, 'README.md')
+            resp = await file_tg_client.send_document(1, 'file_0.pdf')
 
         assert resp.message_id
         assert resp.chat.id
@@ -32,7 +32,7 @@ class TestSendDocument:
         with aioresponses() as m:
             m.post(tg_base_url(f'sendDocument'), **kw)
             with pytest.raises(TgClientError):
-                await file_tg_client.send_document(1, 'README.md')
+                await file_tg_client.send_document(1, 'file_0.pdf')
 
 
 class TestGetFile:

@@ -1,3 +1,7 @@
+from json import JSONDecodeError
+
+import aiohttp
+
 from clients.tg.api import TgClient, TgClientError
 from clients.tg.dcs import File, Message
 
@@ -18,4 +22,28 @@ class TgClientWithFile(TgClient):
                     fd.write(data)
 
     async def send_document(self, chat_id: int, document_path) -> Message:
-        raise NotImplementedError
+        data = aiohttp.FormData()
+        data.add_field(
+            'document',
+            open(document_path, 'rb'),
+            content_type='text/plain'
+        )
+        data.add_field(
+            'chat_id',
+            chat_id,
+            content_type='text/plain'
+        )
+
+        async with self.session.request('post', self.get_path('sendDocument'), data=data) as resp:
+            if resp.status >= 400:
+                raise TgClientError(resp, await resp.text())
+
+            try:
+                data = await resp.json()
+            except JSONDecodeError:
+                raise TgClientError(resp, await resp.text())
+
+            res: Message = Message.Schema().load(data['result'])
+
+        return res
+
