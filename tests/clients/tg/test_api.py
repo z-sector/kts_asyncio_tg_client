@@ -83,7 +83,7 @@ class TestGetUpdatesInObjects:
 
 
 class TestSendMessage:
-    async def test_success(self, tg_base_url, tg_client):
+    async def test_success(self, tg_base_url, tg_client: TgClient):
         def callback(*_, json, **__):
             assert 'chat_id' in json
             assert 'text' in json
@@ -101,7 +101,7 @@ class TestSendMessage:
         {'status': 403},
         {'body': 'invalid json'},
     ])
-    async def test_errors(self, tg_base_url, tg_client, kw):
+    async def test_errors(self, tg_base_url, tg_client: TgClient, kw):
         with aioresponses() as m:
             m.post(tg_base_url(f'sendMessage'), **kw)
             with pytest.raises(TgClientError):

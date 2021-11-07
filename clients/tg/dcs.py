@@ -10,9 +10,10 @@ class From:
     id: int
     is_bot: bool
     first_name: str
-    last_name: str
     username: str
-    language_code: str
+    last_name: str = field(default='')
+    language_code: str = field(default='')
+
 
 @dataclass
 class Chat:
@@ -30,7 +31,12 @@ class Message:
     chat: Chat
     date: int
     text: str
-    entities: List[Dict[str, Any]]
+    entities: List[Dict[str, Any]] = field(default_factory=list)
+
+    Schema: ClassVar[Type[Schema]] = Schema
+
+    class Meta:
+        unknown = EXCLUDE
 
 
 @dataclass

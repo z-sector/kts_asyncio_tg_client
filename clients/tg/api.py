@@ -50,4 +50,6 @@ class TgClient(Client):
         return resp_obj.result
 
     async def send_message(self, chat_id: int, text: str) -> Message:
-        raise NotImplementedError
+        data = await self._perform_request('post', self.get_path('sendMessage'), json={'chat_id': chat_id, 'text': text})
+        res: Message = Message.Schema().load(data['result'])
+        return res
