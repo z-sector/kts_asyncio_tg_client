@@ -2,13 +2,14 @@ import aiohttp
 from aioresponses import aioresponses, CallbackResult
 import pytest
 
+from clients.fapi.tg import TgClientWithFile
 from clients.tg.api import TgClientError
 from clients.tg.dcs import File
 from tests.clients.fapi import data
 
 
 class TestSendDocument:
-    async def test_success(self, tg_base_url, file_tg_client):
+    async def test_success(self, tg_base_url, file_tg_client: TgClientWithFile):
         def callback(*_, **kwargs):
             form_data = kwargs['data']
             assert isinstance(form_data, aiohttp.FormData)
@@ -27,7 +28,7 @@ class TestSendDocument:
         {'status': 403},
         {'body': 'invalid json'},
     ])
-    async def test_errors(self, tg_base_url, file_tg_client, kw):
+    async def test_errors(self, tg_base_url, file_tg_client: TgClientWithFile, kw):
         with aioresponses() as m:
             m.post(tg_base_url(f'sendDocument'), **kw)
             with pytest.raises(TgClientError):
@@ -35,7 +36,7 @@ class TestSendDocument:
 
 
 class TestGetFile:
-    async def test_success(self, tg_base_url, file_tg_client):
+    async def test_success(self, tg_base_url, file_tg_client: TgClientWithFile):
         file_id = '1_file_id_1'
         with aioresponses() as m:
             m.get(tg_base_url(f'getFile?file_id={file_id}'), payload=data.GET_FILE)
@@ -50,7 +51,7 @@ class TestGetFile:
         {'status': 403},
         {'body': 'invalid json'},
     ])
-    async def test_errors(self, tg_base_url, file_tg_client, kw):
+    async def test_errors(self, tg_base_url, file_tg_client: TgClientWithFile, kw):
         file_id = '1_file_id_1'
         with aioresponses() as m:
             m.get(tg_base_url(f'getFile?file_id={file_id}'), **kw)
@@ -59,7 +60,7 @@ class TestGetFile:
 
 
 class TestDownloadFile:
-    async def test_success(self, tg_api_url, file_tg_client, tg_token):
+    async def test_success(self, tg_api_url, file_tg_client: TgClientWithFile, tg_token):
         file_path = 'file_0.pdf'
         body = 'test'
         with aioresponses() as m:
@@ -70,7 +71,7 @@ class TestDownloadFile:
             content = fd.read()
         assert content == body
 
-    async def test_errors(self, tg_api_url, file_tg_client, tg_token):
+    async def test_errors(self, tg_api_url, file_tg_client: TgClientWithFile, tg_token):
         file_path = 'file_0.pdf'
         with aioresponses() as m:
             m.get(f'{tg_api_url}/file/bot{tg_token}/{file_path}', status=403)

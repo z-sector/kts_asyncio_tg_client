@@ -69,7 +69,15 @@ class SendMessageResponse:
 
 @dataclass
 class File:
-    pass
+    file_id: str
+    file_size: int
+    file_path: str
+    file_unique_id: str
+
+    Schema: ClassVar[Type[Schema]] = Schema
+
+    class Meta:
+        unknown = EXCLUDE
 
 
 @dataclass
