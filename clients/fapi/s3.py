@@ -1,3 +1,4 @@
+import aiohttp
 from aiobotocore.session import get_session
 
 from clients.fapi.uploader import MultipartUploader
@@ -11,13 +12,39 @@ class S3Client:
         self.access_key = aws_secret_access_key
 
     async def upload_file(self, bucket: str, path: str, buffer):
-        raise NotImplementedError
+        async with self.session.create_client('s3', region_name='',
+                                              endpoint_url=self.endpoint_url,
+                                              aws_secret_access_key=self.access_key,
+                                              aws_access_key_id=self.key_id) as client:
+            await client.put_object(Bucket=bucket, Key=path, Body=buffer)
 
     async def fetch_and_upload(self, bucket: str, path: str, url: str):
-        raise NotImplementedError
+        session_fetch = aiohttp.ClientSession()
+        async with session_fetch.request('get', url) as resp:
+            if resp.status != 200:
+                return
+
+            body = await resp.read()
+            await self.upload_file(bucket, path, body)
 
     async def stream_upload(self, bucket: str, path: str, url: str):
-        raise NotImplementedError
+        session_fetch = aiohttp.ClientSession()
+        async with session_fetch.request('get', url) as resp:
+            if resp.status != 200:
+                return
+
+            async with self.session.create_client('s3', region_name='us-west-2',
+                                                  endpoint_url=self.endpoint_url,
+                                                  aws_secret_access_key=self.access_key,
+                                                  aws_access_key_id=self.key_id) as client:
+                async with MultipartUploader(client=client, bucket=bucket, key=path) as uploader:
+                    chunk = b''
+                    async for data in resp.content.iter_chunked(1024 * 1024):
+                        chunk += data
+                        if len(chunk) > 5 * 1024 * 1024:
+                            await uploader.upload_part(data)
+                    if chunk:
+                        await uploader.upload_part(data)
 
     async def stream_file(self, bucket: str, path: str, file: str):
         async with self.session.create_client('s3', region_name='us-west-2',

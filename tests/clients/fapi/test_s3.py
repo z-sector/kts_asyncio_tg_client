@@ -6,7 +6,7 @@ from clients.fapi.s3 import S3Client
 
 
 class TestS3:
-    async def test_upload_file(self, s3_context_manager, bucket, s3_credentials):
+    async def test_upload_file(self, s3_context_manager, bucket: str, s3_credentials):
         client = S3Client(**s3_credentials)
         file_name = str(uuid.uuid4().hex)
         body = b"test"
@@ -18,7 +18,7 @@ class TestS3:
             async with response['Body'] as stream:
                 assert await stream.read() == body
 
-    async def test_fetch_and_upload(self, s3_context_manager, bucket, s3_credentials):
+    async def test_fetch_and_upload(self, s3_context_manager, bucket: str, s3_credentials):
         client = S3Client(**s3_credentials)
         file_name = str(uuid.uuid4().hex)
         body = b"test"
@@ -33,7 +33,7 @@ class TestS3:
             async with response['Body'] as stream:
                 assert await stream.read() == body
 
-    async def test_stream_upload(self, s3_context_manager, bucket, s3_credentials):
+    async def test_stream_upload(self, s3_context_manager, bucket: str, s3_credentials):
         client = S3Client(**s3_credentials)
         file_name = str(uuid.uuid4().hex)
         body = b"test"

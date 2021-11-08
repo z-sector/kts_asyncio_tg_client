@@ -26,7 +26,7 @@ def s3_context_manager(s3_credentials):
 
 
 @pytest.fixture
-async def bucket(s3_context_manager):
+async def bucket(s3_context_manager) -> str:
     name = str(uuid.uuid4().hex)
     async with s3_context_manager() as cl:
         await cl.create_bucket(Bucket=name)
