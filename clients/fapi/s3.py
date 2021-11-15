@@ -1,3 +1,5 @@
+import io
+
 import aiohttp
 from aiobotocore.session import get_session
 
@@ -19,32 +21,35 @@ class S3Client:
             await client.put_object(Bucket=bucket, Key=path, Body=buffer)
 
     async def fetch_and_upload(self, bucket: str, path: str, url: str):
-        session_fetch = aiohttp.ClientSession()
-        async with session_fetch.request('get', url) as resp:
-            if resp.status != 200:
-                return
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                buffer = await resp.read()
 
-            body = await resp.read()
-            await self.upload_file(bucket, path, body)
+        await self.upload_file(bucket, path, buffer)
 
     async def stream_upload(self, bucket: str, path: str, url: str):
-        session_fetch = aiohttp.ClientSession()
-        async with session_fetch.request('get', url) as resp:
-            if resp.status != 200:
-                return
+        async with self.session.create_client('s3', region_name='us-west-2',
+                                              endpoint_url=self.endpoint_url,
+                                              aws_secret_access_key=self.access_key,
+                                              aws_access_key_id=self.key_id) as client:
+            async with MultipartUploader(client=client, bucket=bucket, key=path) as uploader:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url) as resp:
+                        buf = io.BytesIO()
+                        buf_size = 0
+                        async for data in resp.content.iter_chunked(1024 ** 2):
+                            buf_size += len(data)
+                            buf.write(data)
+                            if buf_size > 5 * 1024 * 1024:
+                                buf_value = buf.getvalue()
+                                await uploader.upload_part(buf_value)
+                                buf.close()
+                                buf = io.BytesIO()
+                                buf_size = 0
 
-            async with self.session.create_client('s3', region_name='us-west-2',
-                                                  endpoint_url=self.endpoint_url,
-                                                  aws_secret_access_key=self.access_key,
-                                                  aws_access_key_id=self.key_id) as client:
-                async with MultipartUploader(client=client, bucket=bucket, key=path) as uploader:
-                    chunk = b''
-                    async for data in resp.content.iter_chunked(1024 * 1024):
-                        chunk += data
-                        if len(chunk) > 5 * 1024 * 1024:
-                            await uploader.upload_part(data)
-                    if chunk:
-                        await uploader.upload_part(data)
+                        if buf_size != 0:
+                            await uploader.upload_part(buf.getvalue())
+                            buf.close()
 
     async def stream_file(self, bucket: str, path: str, file: str):
         async with self.session.create_client('s3', region_name='us-west-2',
