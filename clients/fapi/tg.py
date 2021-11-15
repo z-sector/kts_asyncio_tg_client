@@ -30,17 +30,6 @@ class TgClientWithFile(TgClient):
 
     async def send_document(self, chat_id: int, document_path) -> Message:
         url = f'{self.get_base_path()}' + '/sendDocument'
-        data = aiohttp.FormData()
-        data.add_field(
-            'document',
-            open(document_path, 'rb'),
-            content_type='text/plain'
-        )
-        data.add_field(
-            'chat_id',
-            chat_id,
-            content_type='text/plain'
-        )
         async with aiohttp.ClientSession() as session:
             with open(document_path, 'rb') as fd:
                 data = aiohttp.FormData()
