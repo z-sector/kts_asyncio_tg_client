@@ -1,55 +1,75 @@
 from json import JSONDecodeError
 from typing import Optional, List
 
+import aiohttp
 from aiohttp import ClientResponse
 from marshmallow import ValidationError
 
 from clients.base import ClientError, Client
-from clients.tg.dcs import UpdateObj, Message, GetUpdatesResponse
+from clients.tg.dcs import UpdateObj, Message, GetUpdatesResponse, SendMessageResponse
 
 
-class TgClientError(ClientError):
+class TgClientError(Exception):
     pass
 
 
 class TgClient(Client):
-    BASE_PATH = 'https://api.telegram.org'
+    API_PATH = 'https://api.telegram.org'
 
     def __init__(self, token: str = ''):
         super().__init__()
         self.token = token
 
-    def get_path(self, url: str) -> str:
-        return f"{self.get_base_path().strip('/')}/bot{self.token}/{url.lstrip('/')}"
+    def get_base_path(self) -> str:
+        return f'{self.API_PATH}/bot{self.token}'
 
     async def _handle_response(self, resp: ClientResponse) -> dict:
-        if resp.status >= 400:
-            raise TgClientError(resp, await resp.text())
+        if resp.status != 200:
+            raise TgClientError
         try:
-            data = await resp.json()
+            return await resp.json()
         except JSONDecodeError:
-            raise TgClientError(resp, await resp.text())
-        return data
+            raise TgClientError
 
     async def get_me(self) -> dict:
-        return await self._perform_request('get', self.get_path('getMe'))
+        url = self.get_base_path() + '/getMe'
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                return await self._handle_response(resp)
 
     async def get_updates(self, offset: Optional[int] = None, timeout: int = 0) -> dict:
+        url = self.get_base_path() + '/getUpdates'
+        params = {}
+
+        if offset:
+            params['offset'] = offset
+        if timeout:
+            params['timeout'] = timeout
         params = {} if offset is None else {'offset': offset}
         if timeout > 0:
             params['timeout'] = timeout
-        data = await self._perform_request('get', self.get_path('getUpdates'), params=params)
-        return data
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params) as resp:
+                return await self._handle_response(resp)
 
     async def get_updates_in_objects(self, *args, **kwargs) -> List[UpdateObj]:
         data = await self.get_updates(*args, **kwargs)
         try:
             resp_obj: GetUpdatesResponse = GetUpdatesResponse.Schema().load(data)
         except ValidationError:
-            raise TgClientError(data)
+            raise TgClientError
         return resp_obj.result
 
     async def send_message(self, chat_id: int, text: str) -> Message:
-        data = await self._perform_request('post', self.get_path('sendMessage'), json={'chat_id': chat_id, 'text': text})
-        res: Message = Message.Schema().load(data['result'])
-        return res
+        url = self.get_base_path() + '/sendMessage'
+        payload = {
+            'chat_id': chat_id,
+            'text': text
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=payload) as resp:
+                data = await self._handle_response(resp)
+                res: SendMessageResponse = SendMessageResponse.Schema().load(data)
+
+        return res.result
