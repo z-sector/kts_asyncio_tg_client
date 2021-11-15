@@ -1,26 +1,32 @@
 from typing import List
 
 import aiohttp
-from aiohttp import ClientWebSocketResponse, WSMessage
+
+
+async def fair_price_receiver(ws: aiohttp.ClientWebSocketResponse):
+    async for msg in ws:
+        msg: aiohttp.WSMessage
+        msg_data = msg.json()
+        if 'data' not in msg_data:
+            continue
+        for item in msg_data['data']:
+            fair_price = item.get('fairPrice')
+            if fair_price is not None:
+                yield fair_price
+
+
+async def subscribe_to_bt(ws: aiohttp.ClientWebSocketResponse):
+    await ws.send_json({"op": "subscribe", "args": ["instrument:XBTUSD"]})
 
 
 async def fetch_10() -> List[float]:
-    async with aiohttp.ClientSession() as session:
-        ws: ClientWebSocketResponse = await session.ws_connect('wss://www.bitmex.com/realtime')
-        await ws.__anext__()
-        await ws.send_json({"op": "subscribe", "args": ["instrument:XBTUSD"]})
-        await ws.__anext__()
+    session = aiohttp.ClientSession()
+    ws = await session.ws_connect('wss://www.bitmex.com/realtime', autoping=True)
+    await subscribe_to_bt(ws)
+    res = []
+    async for fp in fair_price_receiver(ws):
+        res.append(fp)
+        if len(res) == 10:
+            break
 
-        res = []
-        while len(res) < 10:
-            data: WSMessage = await ws.__anext__()
-            json = data.json()
-
-            price = json["data"][0].get('fairPrice')
-            if price:
-                res.append(price)
-
-        await ws.close()
-
-        return res
-
+    return res
