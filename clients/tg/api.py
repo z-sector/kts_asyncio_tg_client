@@ -5,7 +5,7 @@ import aiohttp
 from aiohttp import ClientResponse
 from marshmallow import ValidationError
 
-from clients.base import ClientError, Client
+from clients.base import Client
 from clients.tg.dcs import UpdateObj, Message, GetUpdatesResponse, SendMessageResponse
 
 
@@ -44,9 +44,6 @@ class TgClient(Client):
         if offset:
             params['offset'] = offset
         if timeout:
-            params['timeout'] = timeout
-        params = {} if offset is None else {'offset': offset}
-        if timeout > 0:
             params['timeout'] = timeout
 
         async with aiohttp.ClientSession() as session:

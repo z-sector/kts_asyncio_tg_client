@@ -1,5 +1,5 @@
 from dataclasses import field
-from typing import ClassVar, Type, List, Dict, Any
+from typing import ClassVar, Type, List, Dict, Any, Optional
 
 from marshmallow_dataclass import dataclass
 from marshmallow import Schema, EXCLUDE
@@ -25,6 +25,20 @@ class Chat:
 
 
 @dataclass
+class File:
+    file_id: str
+    file_size: int
+    file_unique_id: str
+    file_path: Optional[str] = None
+    file_name: Optional[str] = None
+
+    Schema: ClassVar[Type[Schema]] = Schema
+
+    class Meta:
+        unknown = EXCLUDE
+
+
+@dataclass
 class Message:
     message_id: int
     from_: From = field(metadata={'data_key': 'from'})
@@ -32,6 +46,7 @@ class Message:
     date: int
     text: str = field(default='')
     entities: List[Dict[str, Any]] = field(default_factory=list)
+    document: Optional[File] = None
 
     Schema: ClassVar[Type[Schema]] = Schema
 
@@ -60,19 +75,6 @@ class GetUpdatesResponse:
 class SendMessageResponse:
     ok: bool
     result: Message
-
-    Schema: ClassVar[Type[Schema]] = Schema
-
-    class Meta:
-        unknown = EXCLUDE
-
-
-@dataclass
-class File:
-    file_id: str
-    file_size: int
-    file_path: str
-    file_unique_id: str
 
     Schema: ClassVar[Type[Schema]] = Schema
 
